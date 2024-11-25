@@ -19,8 +19,8 @@
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Hostname</th>
+                        <th scope="col">Devicename</th>
                         <th scope="col">Username</th>
-                        <th scope="col">OS</th>
                         <th scope="col">Local IP</th>
                         <th scope="col">Mac Address</th>
                         <th scope="col" class="text-center">Management</th>
@@ -37,13 +37,8 @@
                                 {{ if and (ne .OSName "linux") (ne .OSName "windows") (ne .OSName "darwin") }}<td><i class="fas fa-desktop"></i></td>{{ end }}
 
                                 <td>{{ .Hostname }}</td>
+                                <td>{{ .Devicename }}</td>
                                 <td>{{ .Username }} ({{.UserID}})</td>
-
-                                {{ if (eq .OSName "linux") }}<td><span class="badge badge-warning"> {{ .OSName }}</span></td>{{ end }}
-                                {{ if (eq .OSName "windows") }}<td><span class="badge badge-primary"> {{ .OSName }}</span></td>{{ end }}
-                                {{ if (eq .OSName "darwin") }}<td><span class="badge badge-success"> {{ .OSName }}</span></td>{{ end }}
-                                {{ if and (ne .OSName "linux") (ne .OSName "windows") (ne .OSName "darwin") }}<td><a class="badge badge-info"> {{ .OSName }}</a></td>{{ end }}
-
                                 <td>{{ .LocalIPAddress }}</td>
                                 <td>{{ .MacAddress }}</td>
                                 <td class="py-2 text-center">
@@ -58,6 +53,12 @@
                                             <a class="dropdown-item" href="/explorer?address={{ .MacAddressBase64 }}"><i class="far fa-folder-open"></i> File Explorer</a>
                                             <a class="dropdown-item" href="#" onclick="OpenUrl({{ .MacAddressBase64 }})"><i class="fas fa-external-link-alt"></i> Open URL</a>
                                             <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" onclick="UpdateDeviceId({{ .MacAddressBase64 }})"><i class="fas fa-fire"></i> Update Device Id</a>
+                                            <a class="dropdown-item" onclick="InstallVnc({{ .MacAddressBase64 }})"><i class="fas fa-fire"></i> Install VNC</a>
+                                            <a class="dropdown-item" onclick="CloseVnc({{ .MacAddressBase64 }})"><i class="fas fa-fire"></i> Close VNC</a>
+                                            <a class="dropdown-item" onclick="OpenVNC({{ .LocalIPAddress }})"><i class="fas fa-fire"></i> Open VNC</a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" onclick="KillMe({{ .MacAddressBase64 }})"><i class="fas fa-fire"></i> Kill me</a>
                                             <a class="dropdown-item" onclick="LockScreen({{ .MacAddressBase64 }})"><i class="fas fa-lock"></i> Lock</a>
                                             <a class="dropdown-item" onclick="SignOut({{ .MacAddressBase64 }})"><i class="fas fa-sign-out-alt"></i> Sign out</a>
                                             <a class="dropdown-item" onclick="RestartDevice({{ .MacAddressBase64 }})"><i class="fas fa-sync-alt"></i> Restart</a>
@@ -87,6 +88,9 @@
         </div>
     </div>
 
+    <script src="static/js/app/vnc.js"></script>
+    <script src="static/js/app/killme.js"></script>
+    <script src="static/js/app/device-id.js"></script>
     <script src="static/js/app/screenshot.js"></script>
     <script src="static/js/app/restart.js"></script>
     <script src="static/js/app/shutdown.js"></script>

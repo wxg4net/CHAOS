@@ -70,6 +70,9 @@ THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. YOU MAY USE THIS
 | `Lock screen`   |    X    |        |
 | `Sign out`      |    X    |        |
 | `Open Url`      |    X    |    X   |
+| `Vnc`           |    X    |    X   |
+| `Remote Execute`|    X    |    X   |
+| `Proxy`         |    X    |    X   |
 
 ## Quick start
 

@@ -2,10 +2,11 @@ package device
 
 import (
 	"errors"
+	"time"
+
 	"github.com/tiagorlampert/CHAOS/entities"
 	"github.com/tiagorlampert/CHAOS/repositories"
 	"gorm.io/gorm"
-	"time"
 )
 
 type deviceRepository struct {
@@ -32,6 +33,11 @@ func (r deviceRepository) Update(device entities.Device) error {
 		entities.Device{MacAddress: device.MacAddress}).Updates(&device).Error
 }
 
+func (r deviceRepository) Delete(device entities.Device) error {
+	return r.dbClient.Model(&device).Where(
+		entities.Device{MacAddress: device.MacAddress}).Delete(&device).Error
+}
+
 func (r deviceRepository) FindByMacAddress(address string) (*entities.Device, error) {
 	var device entities.Device
 	if err := r.dbClient.Where(entities.Device{MacAddress: address}).First(&device).Error; err != nil {
@@ -44,6 +50,14 @@ func (r deviceRepository) FindAll(updatedAt time.Time) ([]entities.Device, error
 	var devices []entities.Device
 	if err := r.dbClient.Where(
 		"fetched_unix >= ?", updatedAt.Unix()).Find(&devices).Error; err != nil {
+		return nil, err
+	}
+	return devices, nil
+}
+
+func (r deviceRepository) FindAllDevices() ([]entities.Device, error) {
+	var devices []entities.Device
+	if err := r.dbClient.Find(&devices).Error; err != nil {
 		return nil, err
 	}
 	return devices, nil

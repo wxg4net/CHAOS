@@ -1,8 +1,14 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"os"
+
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
+	"github.com/kardianos/service"
 	"github.com/sirupsen/logrus"
 	"github.com/tiagorlampert/CHAOS/infrastructure/database"
 	"github.com/tiagorlampert/CHAOS/internal"
@@ -18,14 +24,30 @@ import (
 	"github.com/tiagorlampert/CHAOS/services/auth"
 	"github.com/tiagorlampert/CHAOS/services/client"
 	"github.com/tiagorlampert/CHAOS/services/device"
+	"github.com/tiagorlampert/CHAOS/services/proxy"
 	"github.com/tiagorlampert/CHAOS/services/url"
 	"github.com/tiagorlampert/CHAOS/services/user"
 	"gorm.io/gorm"
 )
 
-const AppName = "CHAOS"
+const AppName = "CCS"
 
 var Version = "dev"
+
+//go:embed web/static
+var staticFiles embed.FS
+
+type Program struct{}
+
+func (p *Program) Start(s service.Service) error {
+	go p.run()
+	return nil
+}
+
+func (p *Program) Stop(s service.Service) error {
+	fmt.Println("Service stopped")
+	return nil
+}
 
 type App struct {
 	Logger        *logrus.Logger
@@ -35,9 +57,73 @@ type App struct {
 
 func main() {
 	_ = system.ClearScreen()
+	srvConfig := &service.Config{
+		Name:        "cloud_controls_system",
+		DisplayName: "Cloud Controls System",
+		Description: "network remote tools for IT",
+	}
+	prg := &Program{}
+	s, err := service.New(prg, srvConfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if len(os.Args) > 1 {
+		serviceAction := os.Args[1]
+		switch serviceAction {
+		case "install":
+			err := s.Install()
+			if err != nil {
+				fmt.Println("Install Service Failed: ", err.Error())
+			} else {
+				fmt.Println("Install Service Success")
+			}
+			return
+		case "uninstall":
+			err := s.Uninstall()
+			if err != nil {
+				fmt.Println("Uninstall Service Failed: ", err.Error())
+			} else {
+				fmt.Println("Uninstall Service Failed")
+			}
+			return
+		case "start":
+			err := s.Start()
+			if err != nil {
+				fmt.Println("Service Start Failed: ", err.Error())
+			} else {
+				fmt.Println("Service Start Success")
+			}
+			return
+		case "stop":
+			err := s.Stop()
+			if err != nil {
+				fmt.Println("Service Stop Failed: ", err.Error())
+			} else {
+				fmt.Println("Service Stop Success")
+			}
+			return
+		}
+	}
+
+	err = s.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func (p *Program) run() {
 
 	logger := logrus.New()
 	logger.Info(`Loading environment variables`)
+
+	exePath, err := os.Executable()
+	if err != nil {
+		logger.WithField(`cause`, err.Error()).Fatal(`Failed to get the current program path`)
+	}
+	workDir := filepath.Dir(exePath)
+	if err := os.Chdir(workDir); err != nil {
+		logger.WithField(`cause`, err.Error()).Fatal(`Failed to set working directory`)
+	}
 
 	if err := Setup(); err != nil {
 		logger.WithField(`cause`, err.Error()).Fatal(`error running setup`)
@@ -77,7 +163,7 @@ func NewApp(logger *logrus.Logger, configuration *environment.Configuration, dbC
 		logger.WithField(`cause`, err.Error()).Fatal(`error setting up default user`)
 	}
 
-	router := httpDelivery.NewRouter()
+	router := httpDelivery.NewRouter(&staticFiles)
 	jwtMiddleware := middleware.NewJwtMiddleware(authService, userService)
 
 	httpDelivery.NewController(configuration, router, logger, jwtMiddleware, clientService, authService, userService, deviceService, urlService)

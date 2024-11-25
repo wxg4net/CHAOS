@@ -2,6 +2,7 @@ async function GenerateBinary() {
     let address = document.getElementById('address');
     let port = document.getElementById('port');
     let osTarget = document.getElementById('os_target');
+    let osArch = document.getElementById('os_arch');
     let filename = document.getElementById('filename');
     let runHidden = document.getElementById('run_hidden');
 
@@ -17,7 +18,7 @@ async function GenerateBinary() {
         }
     });
 
-    generate(address.value, port.value, osTarget.value, filename.value, runHidden.checked)
+    generate(address.value, port.value, osTarget.value, osArch.value, filename.value, runHidden.checked)
         .then(response => {
             if (!response.ok) {
                 return response.text().then(err => {
@@ -37,12 +38,13 @@ async function GenerateBinary() {
         });
 }
 
-async function generate(address, port, osTarget, filename, runHidden) {
+async function generate(address, port, osTarget, osArch, filename, runHidden) {
     event.preventDefault();
     let formData = new FormData();
     formData.append('address', address);
     formData.append('port', port);
     formData.append('os_target', osTarget);
+    formData.append('os_arch', osArch);
     formData.append('filename', filename);
     formData.append('run_hidden', runHidden);
 

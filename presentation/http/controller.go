@@ -69,11 +69,14 @@ func NewController(
 		adminGroup.PUT("/user/password", handler.updateUserPasswordHandler)
 
 		authGroup.POST("/device", handler.setDeviceHandler)
+		authGroup.PUT("/device", handler.updateDeviceHandler)
+		authGroup.DELETE("/device", handler.deleteDeviceHandler)
 		adminGroup.GET("/devices", handler.getDevicesHandler)
 
 		authGroup.GET("/client", handler.clientHandler)
 		adminGroup.POST("/command", handler.sendCommandHandler)
 
+		adminGroup.GET("/vnc-proxy", handler.vncProxyHandler)
 		adminGroup.GET("/shell", handler.shellHandler)
 
 		adminGroup.GET("/generate", handler.generateBinaryGetHandler)

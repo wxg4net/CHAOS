@@ -2,9 +2,10 @@ package image
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/google/uuid"
 	"github.com/tiagorlampert/CHAOS/internal"
-	"os"
 )
 
 // WritePNG write a given content to a PNG file

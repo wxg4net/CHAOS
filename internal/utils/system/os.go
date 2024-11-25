@@ -18,7 +18,7 @@ const (
 var OSTargetMap = map[OSType]string{
 	Windows: "Windows",
 	Linux:   "Linux",
-	//Darwin:  "Mac OS",
+	Darwin:  "Mac OS",
 }
 
 var OSTargetIntMap = map[int]OSType{
