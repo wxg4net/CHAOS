@@ -1,3 +1,6 @@
+//go:build windows
+// +build windows
+
 package syscall_cmd
 
 import (
@@ -5,6 +8,6 @@ import (
 	"syscall"
 )
 
-func GetCmdWindowsSyscall(cmd string) *syscall.SysProcAttr {
+func GetCmdSyscall(cmd string) *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{CmdLine: fmt.Sprintf(`/c "%s"`, cmd)}
 }
